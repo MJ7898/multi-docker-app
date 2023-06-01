@@ -1,0 +1,26 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install: 
+  - docker build -t mijenne/react-fib-test -f ./client/Dockerfile.dev ./client
+
+script: 
+  - docker run -e CI=true mijenne/react-fib-test npm test -- --coverage 
+
+after_success: 
+  - docker build -t mijenne/multi-client ./client
+  - docker build -t mijenne/multi-nginx ./nginx
+  - docker build -t mijenne/multi-server ./server
+  - docker build -t mijenne/multi-worker ./worker
+
+  # Login to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # Take those images and push them to docker hub
+  - docker push mijenne/multi-client
+  - docker push mijenne/multi-nginx
+  - docker push mijenne/multi-server
+  - docker push mijenne/multi-worker
+  
